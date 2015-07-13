@@ -154,121 +154,6 @@ class ServiceObject
 # Helper routines for queuing
 #
 
-  # Create map with nodes and their element list
-  # Transform ( {role => [nodes], role1 => [nodes]} hash to { node => [roles], node1 => [roles]},
-  # accounting for clusters
-  def elements_to_nodes_to_roles_map(elements, element_order = [])
-    nodes_map = {}
-    active_elements = element_order.flatten
-
-    elements.each do |role_name, nodes|
-      next unless active_elements.include?(role_name)
-
-      # Expand clusters to individual nodes
-      nodes, failures = expand_nodes_for_all(nodes)
-      unless failures.nil? || failures.empty?
-        @logger.debug "elements_to_nodes_to_roles_map: skipping items that we failed to expand: #{failures.join(", ")}"
-      end
-
-      # Add the role to node's list
-      nodes.each do |node_name|
-        if NodeObject.find_node_by_name(node_name).nil?
-          @logger.debug "elements_to_nodes_to_roles_map: skipping deleted node #{node_name}"
-          next
-        end
-        nodes_map[node_name] = [] if nodes_map[node_name].nil?
-        nodes_map[node_name] << role_name
-      end
-    end
-
-    nodes_map
-  end
-
-  # Assumes the BA-LOCK is held
-  def elements_not_ready(nodes, pre_cached_nodes = {})
-    # Check to see if we should delay our commit until nodes are ready.
-    delay = []
-    nodes.each do |n|
-      node = NodeObject.find_node_by_name(n)
-      next if node.nil?
-
-      pre_cached_nodes[n] = node
-      delay << n if node.crowbar['state'] != "ready" and !delay.include?(n)
-    end
-    [ delay, pre_cached_nodes ]
-  end
-
-  # Get a hash of {node => [roles], node1 => [roles]}
-  def add_pending_elements(bc, inst, element_order, elements, queue_me, pre_cached_nodes = {})
-    nodes_map = elements_to_nodes_to_roles_map(elements, element_order)
-
-    # We need to be sure that we're the only ones modifying the node records at this point.
-    # This will work for preventing changes from rails app, but not necessarily chef.
-    # Tough luck.
-    f = acquire_lock "BA-LOCK"
-
-    # Delay is the list of nodes that are not ready and are needed for this deploy to run
-    delay = []
-    pre_cached_nodes = {}
-    begin
-      # Check for delays and build up cache
-      # FIXME: why?
-      if queue_me
-        delay = nodes_map.keys
-      else
-        delay, pre_cached_nodes = elements_not_ready(nodes_map.keys, pre_cached_nodes)
-      end
-
-      unless delay.empty?
-        # Update all nodes affected by this proposal deploy (elements) -> add info that this proposal
-        # will add list of roles to node's crowbar.pending hash.
-        nodes_map.each do |node_name, val|
-          # Make sure we have a node.
-          node = pre_cached_nodes[node_name]
-          node = NodeObject.find_node_by_name(node_name) if node.nil?
-          next if node.nil?
-          pre_cached_nodes[node_name] = node
-
-          # Mark node as pending. User will be informed about node needing
-          # manual allocation if not allocated.
-          node.crowbar["crowbar"]["pending"] = {} if node.crowbar["crowbar"]["pending"].nil?
-          node.crowbar["crowbar"]["pending"]["#{bc}-#{inst}"] = val
-          node.save
-        end
-      end
-    rescue StandardError => e
-      @logger.fatal("add_pending_elements: Exception #{e.message} #{e.backtrace.join("\n")}")
-    ensure
-      release_lock f
-    end
-
-    [ delay, pre_cached_nodes ]
-  end
-
-  # Each node keeps a list of roles (belonging to the current proposal) that
-  # are to be applied to it under crowbar.pending.barclamp-name hash.
-  # When we finish deploying and also when we dequeue the proposal, the list
-  # should be emptied.  FIXME: looks like bc-inst: value should be a list, not
-  # a hash?
-  def remove_pending_elements(bc, inst, elements)
-    nodes_map = elements_to_nodes_to_roles_map(elements)
-
-    # Remove the entries from the nodes.
-    f = acquire_lock "BA-LOCK"
-    begin
-      nodes_map.each do |node_name, data|
-        node = NodeObject.find_node_by_name(node_name)
-        next if node.nil?
-        unless node.crowbar["crowbar"]["pending"].nil? or node.crowbar["crowbar"]["pending"]["#{bc}-#{inst}"].nil?
-          node.crowbar["crowbar"]["pending"]["#{bc}-#{inst}"] = {}
-          node.save
-        end
-      end
-    ensure
-      release_lock f
-    end
-  end
-
   def set_to_applying(nodes, inst)
     f = acquire_lock "BA-LOCK"
     begin
@@ -308,6 +193,7 @@ class ServiceObject
 #   process_queue - see what we can execute
 #
 
+<<<<<<< HEAD
   # Receives proposal info (name, barclamp), list of nodes (elements), on which the proposal
   # should be applied, and list of dependencies - a list of {barclamp, name/inst} hashes.
   # It adds them to the queue, if possible.
@@ -407,67 +293,23 @@ class ServiceObject
     prop.save
     @logger.debug("queue proposal: exit #{inst} #{bc}")
     [ delay, pre_cached_nodes ]
+=======
+  def queue_proposal(inst, elements, deps, bc = @bc_name)
+    Crowbar::DeploymentQueue.new(@logger).queue_proposal(bc, inst, elements, deps)
+>>>>>>> Move queueing routines to Crowbar::DeploymentQueue
   end
 
-  # Removes the proposal reference from the queue, updates the proposal as not queued
-  # and drops the 'pending roles' from the affected nodes.
   def dequeue_proposal_no_lock(queue, inst, bc = @bc_name)
-    @logger.debug("dequeue_proposal_no_lock: enter #{inst} #{bc}")
-    begin
-      elements = nil
-
-      # The elements = item["elements"] is on purpose to get the assignment out of the element.
-      # Find the proposal to delete, get its elements (nodes)
-      queue.delete_if { |item| item["barclamp"] == bc and item["inst"] == inst and ((elements = item["elements"]) or true)}
-
-      # Remove the pending roles for the current proposal from the node records.
-      remove_pending_elements(bc, inst, elements) if elements
-
-      # Mark the proposal as not in the queue
-      prop = Proposal.where(barclamp: bc, name: inst).first
-      unless prop.nil?
-        prop["deployment"][bc]["crowbar-queued"] = false
-        prop.save
-      end
-    rescue StandardError => e
-      @logger.error("Error dequeuing proposal for #{bc}:#{inst}: #{e.message} #{e.backtrace.join("\n")}")
-      @logger.debug("dequeue proposal_no_lock: exit #{inst} #{bc}: error")
-      return false
-    end
-    @logger.debug("dequeue proposal_no_lock: exit #{inst} #{bc}")
-    true
+    Crowbar::DeploymentQueue.new(@logger).dequeue_proposal_no_lock(bc, inst, queue)
   end
 
   # Locking wrapper around dequeue_proposal_no_lock
   def dequeue_proposal(inst, bc = @bc_name)
-    @logger.debug("dequeue proposal: enter #{inst} #{bc}")
-    ret = false
-    begin
-      f = acquire_lock "queue"
-
-      db = Chef::DataBag.load("crowbar/queue") rescue nil
-      @logger.debug("dequeue proposal: exit #{inst} #{bc}: no entry") if db.nil?
-      return [200, {}] if db.nil?
-
-      queue = db["proposal_queue"]
-      dequeued = dequeue_proposal_no_lock(queue, inst, bc)
-      db.save if dequeued
-    rescue StandardError => e
-      @logger.error("Error dequeuing proposal for #{bc}:#{inst}: #{e.message} #{e.backtrace.join("\n")}")
-      @logger.debug("dequeue proposal: exit #{inst} #{bc}: error")
-      return [400, e.message]
-    ensure
-      release_lock f
-    end
-    @logger.debug("dequeue proposal: exit #{inst} #{bc}")
-    return dequeued ? [200, {}] : [400, '']
+    Crowbar::DeploymentQueue.new(@logger).dequeue_proposal(bc, inst)
   end
 
-  #
-  # NOTE: If dependencies don't form a DAG (Directed Acyclic Graph) then we have a problem
-  # with our dependency algorithm
-  #
   def process_queue
+<<<<<<< HEAD
     @logger.debug("process queue: enter")
     loop_again = true
     while loop_again
@@ -577,8 +419,10 @@ class ServiceObject
       end
       @logger.debug("process queue: exit")
     end
+=======
+    Crowbar::DeploymentQueue.new(@logger).process_queue
+>>>>>>> Move queueing routines to Crowbar::DeploymentQueue
   end
-
 #
 # update proposal status information
 #
