@@ -299,11 +299,6 @@ class ServiceObject
 >>>>>>> Move queueing routines to Crowbar::DeploymentQueue
   end
 
-  def dequeue_proposal_no_lock(queue, inst, bc = @bc_name)
-    Crowbar::DeploymentQueue.new(@logger).dequeue_proposal_no_lock(bc, inst, queue)
-  end
-
-  # Locking wrapper around dequeue_proposal_no_lock
   def dequeue_proposal(inst, bc = @bc_name)
     Crowbar::DeploymentQueue.new(@logger).dequeue_proposal(bc, inst)
   end
