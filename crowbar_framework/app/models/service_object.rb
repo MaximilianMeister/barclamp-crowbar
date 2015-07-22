@@ -835,7 +835,7 @@ class ServiceObject
     # Attempt to queue the proposal.  If delay is empty, then run it.
     #
     deps = proposal_dependencies(role)
-    delay, pre_cached_nodes = queue_proposal(inst, element_order, new_elements, deps)
+    delay, pre_cached_nodes = queue_proposal(inst, new_elements, deps)
     return [202, delay] unless delay.empty?
 
     @logger.debug "delay empty - running proposal"
