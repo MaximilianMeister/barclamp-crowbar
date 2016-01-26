@@ -540,14 +540,6 @@ en:
     upgrades:
       title: 'Upgrade'
       header: '%{product}: Upgrade from backup'
-      prepare:
-        header: 'HEADER'
-        description: 'DESCRIPTION'
-        continue: 'continue'
-      download:
-        header: 'header'
-        description: 'description'
-        continue: 'continue'
       nav:
         prepare: 'Prepare upgrade'
         download: 'Data download'
@@ -559,7 +551,7 @@ en:
         finish: 'Upgrade finished'
       prepare:
         cancel: 'Back to selection'
-        continue: 'Continue upgrade process'
+        continue: 'Begin Upgrade Process'
         header: 'Start upgrade'
         description: |
           Lorem Ipsum is simply dummy text of the printing and typesetting
