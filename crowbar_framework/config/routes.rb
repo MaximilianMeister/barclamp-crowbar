@@ -118,5 +118,23 @@ Rails.application.routes.draw do
   get 'crowbar/:barclamp', :action => 'versions', :controller => 'barclamp'
   post 'crowbar/:barclamp/1.0/:action/:id', :controller => 'barclamp'
 
+  scope :installer do
+    root to: "installer#index",
+      as: "installer_root"
+
+    resource :upgrade,
+      only: [:show],
+      controller: "installer/upgrades" do
+      member do
+        get :prepare
+        post :prepare
+        get :download
+        post :download
+        get :confirm
+        post :confirm
+      end
+    end
+  end
+
   match '/:controller/:action/*(:.format)', :via => [:get, :post, :put, :patch, :delete]
 end
