@@ -17,10 +17,8 @@
             %p
               = t(".description")
             %p
-              = button_tag t(".abort"),
-                class: "btn btn-warning"
               = button_tag icon_tag("circle-arrow-down", t(".download")),
-                class: "btn btn-primary"
+                class: "btn btn-primary center-block"
 
         .panel-footer
           .row
@@ -29,9 +27,8 @@
 
             .col-lg-9.text-right
               .btn-group{ role: "group" }
-                = link_to icon_tag("chevron-left", t("back")),
+                = link_to icon_tag("chevron-left", t(".abort")),
                   prepare_upgrade_path,
-                  class: "btn btn-default"
+                  class: "btn btn-danger"
                 = button_tag icon_tag("chevron-right", t(".continue")),
                   class: "btn btn-primary"
-
