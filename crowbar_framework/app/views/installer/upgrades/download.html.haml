@@ -16,13 +16,22 @@
 
             %p
               = t(".description")
+            %p
+              = button_tag t(".abort"),
+                class: "btn btn-warning"
+              = button_tag icon_tag("circle-arrow-down", t(".download")),
+                class: "btn btn-primary"
 
         .panel-footer
           .row
             .col-lg-3
-              /= progress_steps 6, 1, 8
+              = progress_steps 2, 1, 8
 
             .col-lg-9.text-right
               .btn-group{ role: "group" }
-                = button_tag icon_tag(:chevron_right, t(".continue")),
+                = link_to icon_tag("chevron-left", t("back")),
+                  prepare_upgrade_path,
+                  class: "btn btn-default"
+                = button_tag icon_tag("chevron-right", t(".continue")),
                   class: "btn btn-primary"
+

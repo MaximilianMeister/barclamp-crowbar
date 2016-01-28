@@ -555,20 +555,22 @@ en:
         header: 'Start upgrade'
         description: |
           Lorem Ipsum is simply dummy text of the printing and typesetting
-          industry. Lorem Ipsum has been the industry's standard dummy text
-    ever
+          industry. Lorem Ipsum has been the industry's standard dummy text ever
           since the 1500s, when an unknown printer took a galley of type and
           scrambled it to make a type specimen book.
       download:
         cancel: 'Back to selection'
-        continue: 'Continue upgrade process'
-        header: 'Start upgrade'
+        continue: 'Continue Upgrade Process'
+        abort: 'Abort Upgrade'
+        download: 'Download Upgrade Data'
+        header: 'Download the Upgrade Data'
         description: |
-          Lorem Ipsum is simply dummy text of the printing and typesetting
-          industry. Lorem Ipsum has been the industry's standard dummy text
-    ever
-          since the 1500s, when an unknown printer took a galley of type and
-          scrambled it to make a type specimen book.
+          The upgrade data should be saved in a safe place as
+          it is required to complete the upgrade.
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam
+          at porttitor sem. Aliquam erat volutpat. Donec placerat nisl magna,
+          et faucibus arcu condimentum sed.Lorem ipsum
+          dolor sit amet, consectetur adipiscing elit.
 
   # Global
   overview: 'Overview'
