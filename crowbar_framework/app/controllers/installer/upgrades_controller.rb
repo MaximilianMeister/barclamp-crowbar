@@ -19,10 +19,20 @@ module Installer
   class UpgradesController < ApplicationController
     def prepare
       if request.post?
-        service_object = CrowbarService.new(Rails.logger)
+        begin
+          service_object = CrowbarService.new(Rails.logger)
 
-        # transition nodes to "crowbar_upgrade"
-        service_object.prepare_nodes_for_crowbar_upgrade
+          # transition nodes to "crowbar_upgrade"
+          service_object.prepare_nodes_for_crowbar_upgrade
+        rescue
+          flash[:alert] = t("installer.upgrades.prepare.failed")
+
+          respond_to do |format|
+            format.html do
+              redirect_to prepare_upgrade_url
+            end
+          end
+        end
 
         respond_to do |format|
           format.html do
