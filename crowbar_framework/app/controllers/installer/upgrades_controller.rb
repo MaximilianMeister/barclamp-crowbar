@@ -64,7 +64,7 @@ module Installer
       if request.post?
         respond_to do |format|
           format.html do
-            # TODO
+            redirect_to root_url
           end
         end
       else
