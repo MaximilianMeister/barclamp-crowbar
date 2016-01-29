@@ -81,6 +81,19 @@ module Installer
       end
     end
 
+    def abort
+      service_object = CrowbarService.new(Rails.logger)
+
+      # transition nodes to "crowbar_upgrade"
+      service_object.revert_nodes_from_crowbar_upgrade
+
+      respond_to do |format|
+        format.html do
+          redirect_to prepare_upgrade_url
+        end
+      end
+    end
+
     def meta_title
       I18n.t("installer.upgrades.title")
     end
