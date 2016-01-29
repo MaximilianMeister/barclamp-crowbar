@@ -540,6 +540,7 @@ en:
     upgrades:
       title: 'Upgrade'
       header: '%{product}: Upgrade from backup'
+      backup_error: 'Failed to create backup'
       nav:
         prepare: 'Prepare upgrade'
         download: 'Data download'

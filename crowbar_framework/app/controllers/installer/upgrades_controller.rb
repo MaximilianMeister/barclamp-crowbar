@@ -76,7 +76,7 @@ module Installer
           end
         end
       else
-        flash[:alert] = "Cannot download image"
+        flash[:alert] = t("installer.upgrades.backup_error")
         redirect_to download_upgrade_url
       end
     end
