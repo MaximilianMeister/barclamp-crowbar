@@ -16,7 +16,8 @@
             %p
               = t(".description")
             %p
-              = button_tag icon_tag("circle-arrow-down", t(".download")),
+              = link_to icon_tag("circle-arrow-down", t(".download")),
+                file_upgrade_path,
                 class: "btn btn-primary center-block"
 
         .panel-footer

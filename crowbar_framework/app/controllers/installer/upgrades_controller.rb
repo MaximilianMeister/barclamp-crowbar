@@ -19,6 +19,11 @@ module Installer
   class UpgradesController < ApplicationController
     def prepare
       if request.post?
+        service_object = CrowbarService.new(Rails.logger)
+
+        # transition nodes to "crowbar_upgrade"
+        service_object.prepare_nodes_for_crowbar_upgrade
+
         respond_to do |format|
           format.html do
             redirect_to download_upgrade_url
@@ -56,6 +61,23 @@ module Installer
         respond_to do |format|
           format.html
         end
+      end
+    end
+
+    def file
+      @backup = Backup.new
+      if @backup.save
+        respond_to do |format|
+          format.any do
+            send_file(
+              @backup.path,
+              filename: @backup.filename
+            )
+          end
+        end
+      else
+        flash[:alert] = "Cannot download image"
+        redirect_to download_upgrade_url
       end
     end
 

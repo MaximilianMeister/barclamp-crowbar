@@ -130,6 +130,7 @@ Rails.application.routes.draw do
         post :prepare
         get :download
         post :download
+        get :file
         get :confirm
         post :confirm
       end
