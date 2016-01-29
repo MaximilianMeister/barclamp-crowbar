@@ -92,10 +92,19 @@ module Installer
     end
 
     def abort
-      service_object = CrowbarService.new(Rails.logger)
+      begin
+        service_object = CrowbarService.new(Rails.logger)
 
-      # transition nodes to "crowbar_upgrade"
-      service_object.revert_nodes_from_crowbar_upgrade
+        # revert nodes from "crowbar_upgrade"
+        service_object.revert_nodes_from_crowbar_upgrade
+      rescue
+        flash[:alert] = t("installer.upgrades.abort.failed")
+        respond_to do |format|
+          format.html do
+            redirect_to prepare_upgrade_url
+          end
+        end
+      end
 
       respond_to do |format|
         format.html do

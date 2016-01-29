@@ -561,6 +561,8 @@ en:
           since the 1500s, when an unknown printer took a galley of type and
           scrambled it to make a type specimen book.
         failed: 'Preparing Nodes for Crowbar Upgrade failed'
+      abort:
+        failed: 'Reverting Nodes from Crowbar Upgrade failed'
       download:
         cancel: 'Back to selection'
         continue: 'Continue Upgrade Process'
