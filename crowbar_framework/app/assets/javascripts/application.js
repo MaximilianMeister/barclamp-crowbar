@@ -24,7 +24,6 @@ function setBlockUI(events, selector) {
   });
 }
 
-
 jQuery(document).ready(function($) {
   $('textarea.editor').each(function() {
     var cm = CodeMirror.fromTextArea(this, {
@@ -105,6 +104,7 @@ jQuery(document).ready(function($) {
 
   setBlockUI('submit', $('[data-blockui]'));
   setBlockUI('click', $('body[class="installer/upgrades"] [data-blockui]'));
+  setBlockUI('click', $('body.nodes [data-blockui]'));
 
   $('[data-checkall]').live('change', function(event) {
     var checker = $(event.target).data('checkall');
