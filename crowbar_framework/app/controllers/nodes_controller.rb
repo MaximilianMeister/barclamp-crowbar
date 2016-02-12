@@ -306,13 +306,15 @@ class NodesController < ApplicationController
           else
             render :json=>"Invalid hit request '#{action}'", :status => 500 and return
           end
+
+          render :json=>"Attempting '#{action}' for node '#{machine.name}'", :status => 200
         end
-        render :json=>"Attempting '#{action}' for node '#{machine.name}'", :status => 200
       end
 
       format.html do
         if machine.nil?
           flash[:alert] = "Could not find node '#{name}'"
+          redirect_to nodes_path, status: 404
         else
           case action
           when 'reinstall', 'reset', 'update', 'delete'
@@ -321,10 +323,13 @@ class NodesController < ApplicationController
             machine.send(action)
           else
             flash[:alert] = "Invalid hit request '#{action}'"
+            redirect_to nodes_path, status: 500 and return
           end
+
+          flash[:info] = "Attempting '#{action}' for node '#{machine.name}'"
+
+          redirect_to node_path(machine.handle), status: 200
         end
-        flash[:info] = "Attempting '#{action}' for node '#{machine.name}'"
-        redirect_to node_path(machine.handle)
       end
     end
   end
